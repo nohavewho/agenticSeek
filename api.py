@@ -46,8 +46,9 @@ api.add_middleware(
 
 if not os.path.exists(".screenshots"):
     os.makedirs(".screenshots")
+if not os.path.exists(".screenshots"):
+    os.makedirs(".screenshots")
 api.mount("/screenshots", StaticFiles(directory=".screenshots"), name="screenshots")
-api.mount("/", StaticFiles(directory="frontend/agentic-seek-front/build", html=True), name="static")
 
 def initialize_system():
     stealth_mode = config.getboolean('BROWSER', 'stealth_mode')
