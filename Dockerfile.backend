@@ -2,8 +2,10 @@
 FROM --platform=linux/amd64 python:3.11-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install essential packages and Chrome dependencies
-RUN apt-get update -y && apt-get install -y \
+# Install system dependencies
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    # For Chrome
     wget \
     gnupg2 \
     ca-certificates \
@@ -22,37 +24,22 @@ RUN apt-get update -y && apt-get install -y \
     libxrandr2 \
     xdg-utils \
     dbus \
+    # For PyAudio
+    gcc \
+    g++ \
+    portaudio19-dev \
+    libasound2-dev \
+    # For other potential audio/video dependencies
+    ffmpeg \
+    # For other dependencies
+    gfortran \
+    libavcodec-dev \
+    libavformat-dev \
+    libavutil-dev \
+    libasound2 \
+    libgtk-4-1 \
+    alsa-utils \
     && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update -y && \
-      apt-get install -y \
-      gcc \
-      g++ \
-      gfortran \
-      libportaudio2 \
-      portaudio19-dev \
-      ffmpeg \
-      libavcodec-dev \
-      libavformat-dev \
-      libavutil-dev \
-      gnupg2 \
-      wget \
-      unzip \
-      python3 \
-      python3-pip \
-      libasound2 \
-      libatk-bridge2.0-0 \
-      libgtk-4-1 \
-      libnss3 \
-      xdg-utils \
-      wget \
-    && rm -rf /var/lib/apt/lists/*
-
-
-RUN apt-get update -y && \
-apt-get install -y \
-  alsa-utils \
-&& rm -rf /var/lib/apt/lists/*
 
 ENV CHROME_TESTING_VERSION=134.0.6998.88
 ENV DISPLAY=:99
