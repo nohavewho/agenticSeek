@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["portaudio", "ffmpeg", "python3", "python3.pkgs.setuptools"]
+nixPkgs = ["portaudio", "ffmpeg", "python310", "python310Packages.setuptools"]
 
 [start]
 cmd = "python3 -m agenticSeek.api"
