@@ -44,3 +44,4 @@ openai
 sniffio
 ordered_set
 pypinyin
+pyaudio>=0.2.14
