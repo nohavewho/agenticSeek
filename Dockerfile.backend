@@ -81,4 +81,4 @@ RUN mkdir -p /tmp && chmod 1777 /tmp
 EXPOSE 8000
 
 # Run the application
-CMD ["python3", "api.py"]
+CMD ["python3", "-m", "agenticSeek.api"]
