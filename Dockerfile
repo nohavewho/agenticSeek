@@ -10,10 +10,7 @@ RUN npm install
 
 COPY frontend/agentic-seek-front/. .
 
-ARG REACT_APP_BACKEND_URL
-ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
-
-RUN npm run build
+RUN npm run build -- --build-arg REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 
 # Stage 2: Build the Python backend
 FROM python:3.10-slim
