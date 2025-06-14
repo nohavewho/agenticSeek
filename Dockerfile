@@ -14,6 +14,7 @@ RUN apt-get update -y && \
     ffmpeg \
     # For building python packages
     gcc \
+    libc6-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container
