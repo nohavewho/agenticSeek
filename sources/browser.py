@@ -49,7 +49,7 @@ def get_chrome_path() -> str:
                  "/usr/bin/chromium",
                  "/usr/local/bin/chrome",
                  "/opt/google/chrome/chrome-headless-shell",
-                 #"/app/chrome_bundle/chrome136/chrome-linux64"
+                 "/opt/chrome-linux64/chrome"
                 ]
 
     for path in paths:
