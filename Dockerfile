@@ -36,4 +36,5 @@ EXPOSE 8000
 ENV NAME World
 
 # Run api.py when the container launches
-CMD ["python3", "-m", "agenticSeek.api"]
+ENV PYTHONPATH=/app
+CMD ["python3", "api.py"]
