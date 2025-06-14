@@ -62,7 +62,7 @@ def initialize_system():
     logger.info(f"Provider initialized: {provider.provider_name} ({provider.model})")
 
     browser = Browser(
-        create_driver(headless=config.getboolean('BROWSER', 'headless_browser'), stealth_mode=stealth_mode, lang=languages[0]),
+        create_driver(headless=config.getboolean('BROWSER', 'headless_browser'), stealth_mode=stealth_mode, lang=languages[0], chrome_path="/opt/chrome-linux64/chrome"),
         anticaptcha_manual_install=stealth_mode
     )
     logger.info("Browser initialized")
@@ -106,9 +106,15 @@ def initialize_system():
     logger.info("Interaction initialized")
     return interaction
 
-interaction = initialize_system()
+interaction = None
 is_generating = False
 query_resp_history = []
+
+def get_interaction():
+    global interaction
+    if interaction is None:
+        interaction = initialize_system()
+    return interaction
 
 @api.get("/screenshot")
 async def get_screenshot():
@@ -130,18 +136,22 @@ async def health_check():
 @api.get("/is_active")
 async def is_active():
     logger.info("Is active endpoint called")
+    if interaction is None:
+        return {"is_active": False}
     return {"is_active": interaction.is_active}
 
 @api.get("/stop")
 async def stop():
     logger.info("Stop endpoint called")
-    interaction.current_agent.request_stop()
+    if interaction is None:
+        return JSONResponse(status_code=200, content={"status": "no active agent"})
+    get_interaction().current_agent.request_stop()
     return JSONResponse(status_code=200, content={"status": "stopped"})
 
 @api.get("/latest_answer")
 async def get_latest_answer():
     global query_resp_history
-    if interaction.current_agent is None:
+    if interaction is None or interaction.current_agent is None:
         return JSONResponse(status_code=404, content={"error": "No agent available"})
     uid = str(uuid.uuid4())
     if not any(q["answer"] == interaction.current_agent.last_answer for q in query_resp_history):
@@ -204,29 +214,30 @@ async def process_query(request: QueryRequest):
 
     try:
         is_generating = True
-        success = await think_wrapper(interaction, request.query)
+        current_interaction = get_interaction()
+        success = await think_wrapper(current_interaction, request.query)
         is_generating = False
 
         if not success:
-            query_resp.answer = interaction.last_answer
-            query_resp.reasoning = interaction.last_reasoning
+            query_resp.answer = current_interaction.last_answer
+            query_resp.reasoning = current_interaction.last_reasoning
             return JSONResponse(status_code=400, content=query_resp.jsonify())
 
-        if interaction.current_agent:
-            blocks_json = {f'{i}': block.jsonify() for i, block in enumerate(interaction.current_agent.get_blocks_result())}
+        if current_interaction.current_agent:
+            blocks_json = {f'{i}': block.jsonify() for i, block in enumerate(current_interaction.current_agent.get_blocks_result())}
         else:
             logger.error("No current agent found")
             blocks_json = {}
             query_resp.answer = "Error: No current agent"
             return JSONResponse(status_code=400, content=query_resp.jsonify())
 
-        logger.info(f"Answer: {interaction.last_answer}")
+        logger.info(f"Answer: {current_interaction.last_answer}")
         logger.info(f"Blocks: {blocks_json}")
         query_resp.done = "true"
-        query_resp.answer = interaction.last_answer
-        query_resp.reasoning = interaction.last_reasoning
-        query_resp.agent_name = interaction.current_agent.agent_name
-        query_resp.success = str(interaction.last_success)
+        query_resp.answer = current_interaction.last_answer
+        query_resp.reasoning = current_interaction.last_reasoning
+        query_resp.agent_name = current_interaction.current_agent.agent_name
+        query_resp.success = str(current_interaction.last_success)
         query_resp.blocks = blocks_json
         
         query_resp_dict = {
@@ -247,13 +258,10 @@ async def process_query(request: QueryRequest):
         sys.exit(1)
     finally:
         logger.info("Processing finished")
-        if config.getboolean('MAIN', 'save_session'):
+        if interaction and config.getboolean('MAIN', 'save_session'):
             interaction.save_session()
 
 if __name__ == "__main__":
-    envport = os.getenv("BACKEND_PORT")
-    if envport:
-        port = int(envport)
-    else:
-        port = 8000
-    uvicorn.run(api, host="0.0.0.0", port=8000)
+    envport = os.getenv("PORT", os.getenv("BACKEND_PORT", "8000"))
+    port = int(envport)
+    uvicorn.run(api, host="0.0.0.0", port=port)
